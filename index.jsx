@@ -7,5 +7,5 @@ export default function registerFigures({ registry, baseClasses }) {
 
   const NaluIntegralHistogram = makeNaluIntegralHistogram({ Plot, SettingTypes });
 
-  registry.register(NaluIntegralHistogram.displayName, NaluIntegralHistogram);
+  registry.register(NaluIntegralHistogram.name, NaluIntegralHistogram);
 }

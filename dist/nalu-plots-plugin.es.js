@@ -1,7 +1,7 @@
-var x = Object.defineProperty;
-var N = (e, t, a) => t in e ? x(e, t, { enumerable: !0, configurable: !0, writable: !0, value: a }) : e[t] = a;
-var m = (e, t, a) => N(e, typeof t != "symbol" ? t + "" : t, a);
-function b({ Plot: e, SettingTypes: t }) {
+var p = Object.defineProperty;
+var b = (e, t, a) => t in e ? p(e, t, { enumerable: !0, configurable: !0, writable: !0, value: a }) : e[t] = a;
+var m = (e, t, a) => b(e, typeof t != "symbol" ? t + "" : t, a);
+function N({ Plot: e, SettingTypes: t }) {
   var a;
   return a = class extends e {
     static get settingSchema() {
@@ -24,8 +24,8 @@ function b({ Plot: e, SettingTypes: t }) {
       };
     }
     formatPlotly(n) {
-      var f;
-      const i = (f = n == null ? void 0 : n.data) == null ? void 0 : f.arr;
+      var y;
+      const i = (y = n == null ? void 0 : n.data) == null ? void 0 : y.arr;
       if (!Array.isArray(i) || i.length === 0)
         return console.warn("No histograms found or empty array."), { data: [], layout: {} };
       const s = this.settings.selectedChannel;
@@ -34,20 +34,20 @@ function b({ Plot: e, SettingTypes: t }) {
       const r = i[s];
       if (!r || !Array.isArray(r.fArray))
         return console.warn(`Histogram at selected index ${s} is invalid:`, r), { data: [], layout: {} };
-      const g = r.fArray, l = r.fXaxis || {}, c = l.fNbins || g.length - 2, h = l.fXmin ?? 0, y = ((l.fXmax ?? 1) - h) / c, o = [];
-      for (let d = 0; d <= c; d++)
-        o.push(h + d * y);
-      const p = [0, ...g.slice(1, c + 1)];
+      const g = r.fArray, l = r.fXaxis || {}, c = l.fNbins || g.length - 2, h = l.fXmin ?? 0, f = ((l.fXmax ?? 1) - h) / c, o = [];
+      for (let u = 0; u <= c; u++)
+        o.push(h + u * f);
+      const x = [0, ...g.slice(1, c + 1)];
       return {
         data: [
           {
             type: "bar",
             x: o,
-            y: p,
+            y: x,
             name: r.fName || `hist_${s}`,
             marker: { color: "steelblue" },
             hoverinfo: "x+y+name",
-            width: y
+            width: f
           }
         ],
         layout: {
@@ -66,8 +66,8 @@ function b({ Plot: e, SettingTypes: t }) {
   }, m(a, "displayName", "Nalu Integral Histogram"), a;
 }
 function k({ registry: e, baseClasses: t }) {
-  const { Plot: a, SettingTypes: u } = t, n = b({ Plot: a, SettingTypes: u });
-  e.register(n.displayName, n);
+  const { Plot: a, SettingTypes: d } = t, n = N({ Plot: a, SettingTypes: d });
+  e.register(n.name, n);
 }
 export {
   k as default
