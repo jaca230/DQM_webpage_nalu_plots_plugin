@@ -3,6 +3,7 @@
 export default function makeNaluIntegralHistogram({ Plot, SettingTypes }) {
   return class NaluIntegralHistogram extends Plot {
     static displayName = 'Nalu Integral Histogram';
+    static name = 'NaluIntegralHistogram';
 
     static get settingSchema() {
       return {

@@ -1,7 +1,7 @@
 var p = Object.defineProperty;
-var b = (e, t, a) => t in e ? p(e, t, { enumerable: !0, configurable: !0, writable: !0, value: a }) : e[t] = a;
-var m = (e, t, a) => b(e, typeof t != "symbol" ? t + "" : t, a);
-function N({ Plot: e, SettingTypes: t }) {
+var N = (e, t, a) => t in e ? p(e, t, { enumerable: !0, configurable: !0, writable: !0, value: a }) : e[t] = a;
+var g = (e, t, a) => N(e, typeof t != "symbol" ? t + "" : t, a);
+function b({ Plot: e, SettingTypes: t }) {
   var a;
   return a = class extends e {
     static get settingSchema() {
@@ -34,10 +34,10 @@ function N({ Plot: e, SettingTypes: t }) {
       const r = i[s];
       if (!r || !Array.isArray(r.fArray))
         return console.warn(`Histogram at selected index ${s} is invalid:`, r), { data: [], layout: {} };
-      const g = r.fArray, l = r.fXaxis || {}, c = l.fNbins || g.length - 2, h = l.fXmin ?? 0, f = ((l.fXmax ?? 1) - h) / c, o = [];
+      const h = r.fArray, l = r.fXaxis || {}, c = l.fNbins || h.length - 2, f = l.fXmin ?? 0, m = ((l.fXmax ?? 1) - f) / c, o = [];
       for (let u = 0; u <= c; u++)
-        o.push(h + u * f);
-      const x = [0, ...g.slice(1, c + 1)];
+        o.push(f + u * m);
+      const x = [0, ...h.slice(1, c + 1)];
       return {
         data: [
           {
@@ -47,7 +47,7 @@ function N({ Plot: e, SettingTypes: t }) {
             name: r.fName || `hist_${s}`,
             marker: { color: "steelblue" },
             hoverinfo: "x+y+name",
-            width: f
+            width: m
           }
         ],
         layout: {
@@ -63,10 +63,10 @@ function N({ Plot: e, SettingTypes: t }) {
         }
       };
     }
-  }, m(a, "displayName", "Nalu Integral Histogram"), a;
+  }, g(a, "displayName", "Nalu Integral Histogram"), g(a, "name", "NaluIntegralHistogram"), a;
 }
 function k({ registry: e, baseClasses: t }) {
-  const { Plot: a, SettingTypes: d } = t, n = N({ Plot: a, SettingTypes: d });
+  const { Plot: a, SettingTypes: d } = t, n = b({ Plot: a, SettingTypes: d });
   e.register(n.name, n);
 }
 export {
