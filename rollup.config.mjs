@@ -1,22 +1,26 @@
-// rollup.config.js
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
 
 export default {
-  input: 'index.js',  // Entry file of your plugin
+  input: 'index.js',
   output: {
-    file: 'dist/nalu-plugin.bundle.js', // Output bundle file
-    format: 'iife',        // Immediately Invoked Function Expression (for eval)
-    name: 'PluginRegister',  // Global variable name
+    file: 'dist/nalu-plugin.bundle.js',
+    format: 'iife',
+    name: 'PluginRegister', // exposed global for eval
+    globals: {
+      react: 'React',         // assume host app provides React via window.React
+      'react-dom': 'ReactDOM',
+    },
   },
+  external: ['react', 'react-dom'], // prevent bundling these
   plugins: [
-    resolve(),  // so Rollup can find node_modules imports
-    commonjs(), // so Rollup can convert CommonJS to ES6 modules if needed
+    resolve(),
+    commonjs(),
     babel({
       babelHelpers: 'bundled',
-      presets: ['@babel/preset-env', '@babel/preset-react'], // transpile modern JS + JSX
-      exclude: 'node_modules/**', // don't transpile dependencies
+      presets: ['@babel/preset-env', '@babel/preset-react'],
+      exclude: 'node_modules/**',
     }),
   ],
 };
