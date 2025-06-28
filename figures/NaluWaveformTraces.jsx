@@ -59,7 +59,6 @@ export default function makeNaluWaveformTraces({ Plot, SettingTypes }) {
           margin: { t: 30, r: 20, l: 40, b: 40 },
           xaxis: {
             title: 'Sample Number',
-            range: [0, xValues.length - 1],
           },
           yaxis: { title: 'ADC Value' },
           legend: { orientation: 'h', y: -0.2 },

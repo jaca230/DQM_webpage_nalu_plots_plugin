@@ -347,8 +347,7 @@ var PluginRegister = (function () {
                 b: 40
               },
               xaxis: {
-                title: 'Sample Number',
-                range: [0, xValues.length - 1]
+                title: 'Sample Number'
               },
               yaxis: {
                 title: 'ADC Value'
