@@ -3,7 +3,7 @@ import makeNaluWaveformTraces from './figures/NaluWaveformTraces.jsx';
 import makeNaluTimingTicker from './figures/NaluTimingTicker.jsx';
 import makeNaluTimingTable from './figures/NaluTimingTable.jsx';
 
-export default function registerFigures({ registry, baseClasses }) {
+function registerFigures({ registry, baseClasses }) {
   const { Plot, SettingTypes, Table } = baseClasses;
 
   const NaluIntegralHistogram = makeNaluIntegralHistogram({ Plot, SettingTypes });
@@ -15,4 +15,12 @@ export default function registerFigures({ registry, baseClasses }) {
   registry.register(NaluWaveformTraces.name, NaluWaveformTraces);
   registry.register(NaluTimingTicker.name, NaluTimingTicker);
   registry.register(NaluTimingTable.name, NaluTimingTable);
+}
+
+// Export for ES module import
+export default registerFigures;
+
+// Also expose globally for eval/script loading
+if (typeof window !== 'undefined') {
+  window.PluginRegister = registerFigures;
 }

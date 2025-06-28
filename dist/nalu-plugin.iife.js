@@ -720,6 +720,11 @@ var PluginRegister = (function () {
     registry.register(NaluTimingTable.name, NaluTimingTable);
   }
 
+  // Also expose globally for eval/script loading
+  if (typeof window !== 'undefined') {
+    window.PluginRegister = registerFigures;
+  }
+
   return registerFigures;
 
 })();
