@@ -33,6 +33,16 @@ export default function makeNaluTimingTicker({ Plot, SettingTypes }) {
         parse_time: [],
         udp_time: [],
       };
+
+      this.fields = [
+        { key: 'data_rate', label: 'Data Rate' },
+        { key: 'event_time', label: 'Event Time' },
+        { key: 'total_time', label: 'Total Time' },
+        { key: 'parse_time', label: 'Parse Time' },
+        { key: 'udp_time', label: 'UDP Time' },
+      ];
+
+      this.colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
     }
 
     onBufferResize() {
@@ -42,14 +52,27 @@ export default function makeNaluTimingTicker({ Plot, SettingTypes }) {
       });
     }
 
-    formatPlotly(raw) {
-      if (!raw?.data?.arr?.length) {
-        return { data: [], layout: {} };
-      }
+    initPlot(json) {
+      this.addEntryToBuffer(json);
+      return {
+        data: this.buildTraces(),
+        layout: this.buildLayout(),
+      };
+    }
 
-      const entry = raw.data.arr[0];
+    updatePlot(json) {
+      this.addEntryToBuffer(json);
+      return {
+        data: this.buildTraces(),
+        layout: undefined, // layout stays untouched
+      };
+    }
+
+    addEntryToBuffer(raw) {
+      const entry = raw?.data?.arr?.[0];
+      if (!entry) return;
+
       const timestamp = new Date().toISOString();
-
       this.buffer.timestamps.push(timestamp);
       this.buffer.data_rate.push(entry.data_rate);
       this.buffer.event_time.push(entry.event_time);
@@ -61,18 +84,10 @@ export default function makeNaluTimingTicker({ Plot, SettingTypes }) {
       Object.keys(this.buffer).forEach(key => {
         this.buffer[key] = this.buffer[key].slice(-maxLen);
       });
+    }
 
-      const fields = [
-        { key: 'data_rate', label: 'Data Rate' },
-        { key: 'event_time', label: 'Event Time' },
-        { key: 'total_time', label: 'Total Time' },
-        { key: 'parse_time', label: 'Parse Time' },
-        { key: 'udp_time', label: 'UDP Time' },
-      ];
-
-      const colorPalette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
-
-      const traces = fields.map((field, i) => ({
+    buildTraces() {
+      return this.fields.map((field, i) => ({
         type: 'scatter',
         mode: 'lines+markers',
         x: this.buffer.timestamps,
@@ -80,18 +95,20 @@ export default function makeNaluTimingTicker({ Plot, SettingTypes }) {
         name: field.label,
         xaxis: `x${i + 1}`,
         yaxis: `y${i + 1}`,
-        marker: { color: colorPalette[i % colorPalette.length] },
-        line: { color: colorPalette[i % colorPalette.length] },
+        marker: { color: this.colors[i % this.colors.length] },
+        line: { color: this.colors[i % this.colors.length] },
       }));
+    }
 
+    buildLayout() {
       const layout = {
         autosize: true,
         margin: { t: 40, r: 20, l: 40, b: 30 },
-        grid: { rows: 5, columns: 1, pattern: 'independent' },
+        grid: { rows: this.fields.length, columns: 1, pattern: 'independent' },
         legend: { orientation: 'h', y: -0.2 },
       };
 
-      fields.forEach((field, i) => {
+      this.fields.forEach((field, i) => {
         layout[`xaxis${i + 1}`] = {
           title: 'Time',
           showgrid: false,
@@ -102,7 +119,7 @@ export default function makeNaluTimingTicker({ Plot, SettingTypes }) {
         };
       });
 
-      return { data: traces, layout };
+      return layout;
     }
   };
 }

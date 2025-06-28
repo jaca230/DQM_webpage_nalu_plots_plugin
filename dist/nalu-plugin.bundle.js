@@ -178,8 +178,6 @@ var PluginRegister = (function () {
     }
   }
 
-  // figures/NaluIntegralHistogram.jsx
-
   function makeNaluIntegralHistogram(_ref) {
     var _NaluIntegralHistogram;
     var Plot = _ref.Plot,
@@ -191,32 +189,41 @@ var PluginRegister = (function () {
       }
       _inherits(NaluIntegralHistogram, _Plot);
       return _createClass(NaluIntegralHistogram, [{
-        key: "formatPlotly",
-        value: function formatPlotly(raw) {
+        key: "initPlot",
+        value: function initPlot(raw) {
+          var data = this.extractPlotData(raw);
+          return {
+            data: data ? [data] : [],
+            layout: this.buildLayout(data)
+          };
+        }
+      }, {
+        key: "updatePlot",
+        value: function updatePlot(raw) {
+          var data = this.extractPlotData(raw);
+          return {
+            data: data ? [data] : [],
+            layout: undefined // no layout update needed
+          };
+        }
+      }, {
+        key: "extractPlotData",
+        value: function extractPlotData(raw) {
           var _raw$data, _fXaxis$fXmin, _fXaxis$fXmax;
           var histList = raw === null || raw === void 0 || (_raw$data = raw.data) === null || _raw$data === void 0 ? void 0 : _raw$data.arr;
           if (!Array.isArray(histList) || histList.length === 0) {
             console.warn('No histograms found or empty array.');
-            return {
-              data: [],
-              layout: {}
-            };
+            return null;
           }
           var index = this.settings.selectedChannel;
           if (index < 0 || index >= histList.length) {
             console.warn("Selected channel ".concat(index, " is out of bounds."));
-            return {
-              data: [],
-              layout: {}
-            };
+            return null;
           }
           var hist = histList[index];
           if (!hist || !Array.isArray(hist.fArray)) {
             console.warn("Histogram at selected index ".concat(index, " is invalid:"), hist);
-            return {
-              data: [],
-              layout: {}
-            };
+            return null;
           }
           var fArray = hist.fArray;
           var fXaxis = hist.fXaxis || {};
@@ -228,40 +235,45 @@ var PluginRegister = (function () {
           for (var i = 0; i <= nBins; i++) {
             binEdges.push(xMin + i * binWidth);
           }
-          var counts = fArray.slice(1, nBins + 1);
-          var yVals = [0].concat(_toConsumableArray(counts));
+          var counts = fArray.slice(1, nBins + 1); // skip underflow bin
+          var yVals = [0].concat(_toConsumableArray(counts)); // bar plot expects same length for x/y
+
           return {
-            data: [{
-              type: 'bar',
-              x: binEdges,
-              y: yVals,
-              name: hist.fName || "hist_".concat(index),
-              marker: {
-                color: 'steelblue'
-              },
-              hoverinfo: 'x+y+name',
-              width: binWidth
-            }],
-            layout: {
-              autosize: true,
-              margin: {
-                t: 30,
-                r: 20,
-                l: 40,
-                b: 40
-              },
-              xaxis: {
-                title: 'Integral',
-                range: [binEdges[0], binEdges[binEdges.length - 1]]
-              },
-              yaxis: {
-                title: 'Counts'
-              },
-              bargap: 0,
-              legend: {
-                orientation: 'h',
-                y: -0.2
-              }
+            type: 'bar',
+            x: binEdges,
+            y: yVals,
+            name: hist.fName || "hist_".concat(index),
+            marker: {
+              color: 'steelblue'
+            },
+            hoverinfo: 'x+y+name',
+            width: binWidth
+          };
+        }
+      }, {
+        key: "buildLayout",
+        value: function buildLayout(dataTrace) {
+          if (!dataTrace) return {};
+          var xVals = dataTrace.x;
+          return {
+            autosize: true,
+            margin: {
+              t: 30,
+              r: 20,
+              l: 40,
+              b: 40
+            },
+            xaxis: {
+              title: 'Integral',
+              range: [xVals[0], xVals[xVals.length - 1]]
+            },
+            yaxis: {
+              title: 'Counts'
+            },
+            bargap: 0,
+            legend: {
+              orientation: 'h',
+              y: -0.2
             }
           };
         }
@@ -300,44 +312,13 @@ var PluginRegister = (function () {
       }
       _inherits(NaluWaveformTraces, _Plot);
       return _createClass(NaluWaveformTraces, [{
-        key: "formatPlotly",
-        value: function formatPlotly(raw) {
-          var _raw$data;
-          var waveformList = raw === null || raw === void 0 || (_raw$data = raw.data) === null || _raw$data === void 0 ? void 0 : _raw$data.arr;
-          if (!Array.isArray(waveformList) || waveformList.length === 0) {
-            console.warn('No waveforms found or empty array.');
-            return {
-              data: [],
-              layout: {}
-            };
-          }
-          var selectedChannel = this.settings.selectedChannel;
-          var waveform = waveformList.find(function (wf) {
-            return wf.channel_num === selectedChannel;
-          });
-          if (!waveform || !Array.isArray(waveform.trace)) {
-            console.warn("No waveform found for selected channel ".concat(selectedChannel));
-            return {
-              data: [],
-              layout: {}
-            };
-          }
-          var xValues = waveform.trace.map(function (_, i) {
-            return i;
-          });
-          var yValues = waveform.trace;
+        key: "initPlot",
+        value:
+        // Called once at init: define layout + first data
+        function initPlot(json) {
+          var trace = this.buildTrace(json);
           return {
-            data: [{
-              type: 'scatter',
-              mode: 'lines',
-              x: xValues,
-              y: yValues,
-              name: "Channel ".concat(selectedChannel, " Trace"),
-              line: {
-                color: 'steelblue'
-              },
-              hoverinfo: 'x+y+name'
-            }],
+            data: trace ? [trace] : [],
             layout: {
               autosize: true,
               margin: {
@@ -357,6 +338,50 @@ var PluginRegister = (function () {
                 y: -0.2
               }
             }
+          };
+        }
+
+        // Called periodically: only update data (reuse layout)
+      }, {
+        key: "updatePlot",
+        value: function updatePlot(json) {
+          var trace = this.buildTrace(json);
+          return {
+            data: trace ? [trace] : [],
+            layout: undefined // don't touch layout unless needed
+          };
+        }
+
+        // Shared trace construction logic
+      }, {
+        key: "buildTrace",
+        value: function buildTrace(raw) {
+          var _raw$data;
+          var waveformList = raw === null || raw === void 0 || (_raw$data = raw.data) === null || _raw$data === void 0 ? void 0 : _raw$data.arr;
+          if (!Array.isArray(waveformList) || waveformList.length === 0) {
+            console.warn('No waveforms found or empty array.');
+            return null;
+          }
+          var selectedChannel = this.settings.selectedChannel;
+          var waveform = waveformList.find(function (wf) {
+            return wf.channel_num === selectedChannel;
+          });
+          if (!waveform || !Array.isArray(waveform.trace)) {
+            console.warn("No waveform found for selected channel ".concat(selectedChannel));
+            return null;
+          }
+          return {
+            type: 'scatter',
+            mode: 'lines',
+            x: waveform.trace.map(function (_, i) {
+              return i;
+            }),
+            y: waveform.trace,
+            name: "Channel ".concat(selectedChannel, " Trace"),
+            line: {
+              color: 'steelblue'
+            },
+            hoverinfo: 'x+y+name'
           };
         }
       }], [{
@@ -400,6 +425,23 @@ var PluginRegister = (function () {
           parse_time: [],
           udp_time: []
         };
+        _this.fields = [{
+          key: 'data_rate',
+          label: 'Data Rate'
+        }, {
+          key: 'event_time',
+          label: 'Event Time'
+        }, {
+          key: 'total_time',
+          label: 'Total Time'
+        }, {
+          key: 'parse_time',
+          label: 'Parse Time'
+        }, {
+          key: 'udp_time',
+          label: 'UDP Time'
+        }];
+        _this.colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
         return _this;
       }
       _inherits(NaluTimingTicker, _Plot);
@@ -413,17 +455,30 @@ var PluginRegister = (function () {
           });
         }
       }, {
-        key: "formatPlotly",
-        value: function formatPlotly(raw) {
+        key: "initPlot",
+        value: function initPlot(json) {
+          this.addEntryToBuffer(json);
+          return {
+            data: this.buildTraces(),
+            layout: this.buildLayout()
+          };
+        }
+      }, {
+        key: "updatePlot",
+        value: function updatePlot(json) {
+          this.addEntryToBuffer(json);
+          return {
+            data: this.buildTraces(),
+            layout: undefined // layout stays untouched
+          };
+        }
+      }, {
+        key: "addEntryToBuffer",
+        value: function addEntryToBuffer(raw) {
           var _raw$data,
             _this3 = this;
-          if (!(raw !== null && raw !== void 0 && (_raw$data = raw.data) !== null && _raw$data !== void 0 && (_raw$data = _raw$data.arr) !== null && _raw$data !== void 0 && _raw$data.length)) {
-            return {
-              data: [],
-              layout: {}
-            };
-          }
-          var entry = raw.data.arr[0];
+          var entry = raw === null || raw === void 0 || (_raw$data = raw.data) === null || _raw$data === void 0 || (_raw$data = _raw$data.arr) === null || _raw$data === void 0 ? void 0 : _raw$data[0];
+          if (!entry) return;
           var timestamp = new Date().toISOString();
           this.buffer.timestamps.push(timestamp);
           this.buffer.data_rate.push(entry.data_rate);
@@ -435,40 +490,32 @@ var PluginRegister = (function () {
           Object.keys(this.buffer).forEach(function (key) {
             _this3.buffer[key] = _this3.buffer[key].slice(-maxLen);
           });
-          var fields = [{
-            key: 'data_rate',
-            label: 'Data Rate'
-          }, {
-            key: 'event_time',
-            label: 'Event Time'
-          }, {
-            key: 'total_time',
-            label: 'Total Time'
-          }, {
-            key: 'parse_time',
-            label: 'Parse Time'
-          }, {
-            key: 'udp_time',
-            label: 'UDP Time'
-          }];
-          var colorPalette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
-          var traces = fields.map(function (field, i) {
+        }
+      }, {
+        key: "buildTraces",
+        value: function buildTraces() {
+          var _this4 = this;
+          return this.fields.map(function (field, i) {
             return {
               type: 'scatter',
               mode: 'lines+markers',
-              x: _this3.buffer.timestamps,
-              y: _this3.buffer[field.key],
+              x: _this4.buffer.timestamps,
+              y: _this4.buffer[field.key],
               name: field.label,
               xaxis: "x".concat(i + 1),
               yaxis: "y".concat(i + 1),
               marker: {
-                color: colorPalette[i % colorPalette.length]
+                color: _this4.colors[i % _this4.colors.length]
               },
               line: {
-                color: colorPalette[i % colorPalette.length]
+                color: _this4.colors[i % _this4.colors.length]
               }
             };
           });
+        }
+      }, {
+        key: "buildLayout",
+        value: function buildLayout() {
           var layout = {
             autosize: true,
             margin: {
@@ -478,7 +525,7 @@ var PluginRegister = (function () {
               b: 30
             },
             grid: {
-              rows: 5,
+              rows: this.fields.length,
               columns: 1,
               pattern: 'independent'
             },
@@ -487,7 +534,7 @@ var PluginRegister = (function () {
               y: -0.2
             }
           };
-          fields.forEach(function (field, i) {
+          this.fields.forEach(function (field, i) {
             layout["xaxis".concat(i + 1)] = {
               title: 'Time',
               showgrid: false
@@ -497,10 +544,7 @@ var PluginRegister = (function () {
               showgrid: true
             };
           });
-          return {
-            data: traces,
-            layout: layout
-          };
+          return layout;
         }
       }], [{
         key: "settingSchema",

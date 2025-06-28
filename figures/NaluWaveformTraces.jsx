@@ -24,11 +24,36 @@ export default function makeNaluWaveformTraces({ Plot, SettingTypes }) {
       };
     }
 
-    formatPlotly(raw) {
+    // Called once at init: define layout + first data
+    initPlot(json) {
+      const trace = this.buildTrace(json);
+      return {
+        data: trace ? [trace] : [],
+        layout: {
+          autosize: true,
+          margin: { t: 30, r: 20, l: 40, b: 40 },
+          xaxis: { title: 'Sample Number' },
+          yaxis: { title: 'ADC Value' },
+          legend: { orientation: 'h', y: -0.2 },
+        },
+      };
+    }
+
+    // Called periodically: only update data (reuse layout)
+    updatePlot(json) {
+      const trace = this.buildTrace(json);
+      return {
+        data: trace ? [trace] : [],
+        layout: undefined, // don't touch layout unless needed
+      };
+    }
+
+    // Shared trace construction logic
+    buildTrace(raw) {
       const waveformList = raw?.data?.arr;
       if (!Array.isArray(waveformList) || waveformList.length === 0) {
         console.warn('No waveforms found or empty array.');
-        return { data: [], layout: {} };
+        return null;
       }
 
       const selectedChannel = this.settings.selectedChannel;
@@ -36,33 +61,17 @@ export default function makeNaluWaveformTraces({ Plot, SettingTypes }) {
 
       if (!waveform || !Array.isArray(waveform.trace)) {
         console.warn(`No waveform found for selected channel ${selectedChannel}`);
-        return { data: [], layout: {} };
+        return null;
       }
 
-      const xValues = waveform.trace.map((_, i) => i);
-      const yValues = waveform.trace;
-
       return {
-        data: [
-          {
-            type: 'scatter',
-            mode: 'lines',
-            x: xValues,
-            y: yValues,
-            name: `Channel ${selectedChannel} Trace`,
-            line: { color: 'steelblue' },
-            hoverinfo: 'x+y+name',
-          },
-        ],
-        layout: {
-          autosize: true,
-          margin: { t: 30, r: 20, l: 40, b: 40 },
-          xaxis: {
-            title: 'Sample Number',
-          },
-          yaxis: { title: 'ADC Value' },
-          legend: { orientation: 'h', y: -0.2 },
-        },
+        type: 'scatter',
+        mode: 'lines',
+        x: waveform.trace.map((_, i) => i),
+        y: waveform.trace,
+        name: `Channel ${selectedChannel} Trace`,
+        line: { color: 'steelblue' },
+        hoverinfo: 'x+y+name',
       };
     }
   };
