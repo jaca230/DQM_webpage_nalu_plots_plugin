@@ -48,12 +48,22 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
       if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
       if (!data) return <div>No data</div>;
 
-      // Filter out unwanted keys
       const entries = Object.entries(data).filter(
         ([k]) => k !== '_typename' && k !== 'fBits' && k !== 'fUniqueID'
       );
 
-      // Helper function to format value with units
+      // Key to Label with units
+      const metricLabels = {
+        collection_cycle_index: 'Cycle Index',
+        collection_cycle_timestamp_ns: 'Timestamp (ns)',
+        udp_time: 'UDP Receive Time (µs)',
+        parse_time: 'Parse Time (µs)',
+        event_time: 'Event Processing Time (µs)',
+        total_time: 'Total Cycle Time (µs)',
+        data_processed: 'Data Processed (GB)',
+        data_rate: 'Data Rate (MB/s)',
+      };
+
       const formatValue = (key, val) => {
         if (typeof val !== 'number') return val;
 
@@ -62,11 +72,9 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
           case 'parse_time':
           case 'event_time':
           case 'total_time':
-            return `${(val * 1e6).toFixed(0)} µs`; // seconds -> microseconds
+            return (val * 1e6).toFixed(0);
           case 'data_processed':
-            return `${(val / 1e9).toFixed(6)} GB`; // bytes -> gigabytes
-          case 'collection_cycle_timestamp_ns':
-            return `${val} ns`;
+            return (val / 1e9).toFixed(6);
           default:
             return val;
         }
@@ -84,7 +92,7 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
             <tbody>
               {entries.map(([key, val]) => (
                 <tr key={key}>
-                  <td style={tdStyle}>{key}</td>
+                  <td style={tdStyle}>{metricLabels[key] || key}</td>
                   <td style={tdStyle}>{formatValue(key, val)}</td>
                 </tr>
               ))}
