@@ -641,15 +641,23 @@ var PluginRegister = (function () {
             }
           }, "Error: ", error);
           if (!data) return /*#__PURE__*/React.createElement("div", null, "No data");
-
-          // Filter out unwanted keys
           var entries = Object.entries(data).filter(function (_ref2) {
             var _ref3 = _slicedToArray(_ref2, 1),
               k = _ref3[0];
             return k !== '_typename' && k !== 'fBits' && k !== 'fUniqueID';
           });
 
-          // Helper function to format value with units
+          // Key to Label with units
+          var metricLabels = {
+            collection_cycle_index: 'Cycle Index',
+            collection_cycle_timestamp_ns: 'Timestamp (ns)',
+            udp_time: 'UDP Receive Time (µs)',
+            parse_time: 'Parse Time (µs)',
+            event_time: 'Event Processing Time (µs)',
+            total_time: 'Total Cycle Time (µs)',
+            data_processed: 'Data Processed (GB)',
+            data_rate: 'Data Rate (MB/s)'
+          };
           var formatValue = function formatValue(key, val) {
             if (typeof val !== 'number') return val;
             switch (key) {
@@ -657,13 +665,9 @@ var PluginRegister = (function () {
               case 'parse_time':
               case 'event_time':
               case 'total_time':
-                return "".concat((val * 1e6).toFixed(0), " \xB5s");
-              // seconds -> microseconds
+                return (val * 1e6).toFixed(0);
               case 'data_processed':
-                return "".concat((val / 1e9).toFixed(6), " GB");
-              // bytes -> gigabytes
-              case 'collection_cycle_timestamp_ns':
-                return "".concat(val, " ns");
+                return (val / 1e9).toFixed(6);
               default:
                 return val;
             }
@@ -690,7 +694,7 @@ var PluginRegister = (function () {
               key: key
             }, /*#__PURE__*/React.createElement("td", {
               style: tdStyle
-            }, key), /*#__PURE__*/React.createElement("td", {
+            }, metricLabels[key] || key), /*#__PURE__*/React.createElement("td", {
               style: tdStyle
             }, formatValue(key, val)));
           }))));
