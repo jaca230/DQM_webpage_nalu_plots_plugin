@@ -52,7 +52,6 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
         ([k]) => k !== '_typename' && k !== 'fBits' && k !== 'fUniqueID'
       );
 
-      // Key to Label with units
       const metricLabels = {
         collection_cycle_index: 'Cycle Index',
         collection_cycle_timestamp_ns: 'Timestamp (ns)',
@@ -60,7 +59,7 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
         parse_time: 'Parse Time (µs)',
         event_time: 'Event Processing Time (µs)',
         total_time: 'Total Cycle Time (µs)',
-        data_processed: 'Data Processed (GB)',
+        data_processed: 'Data Processed (KB)',
         data_rate: 'Data Rate (MB/s)',
       };
 
@@ -68,15 +67,21 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
         if (typeof val !== 'number') return val;
 
         switch (key) {
+          case 'collection_cycle_index':
+          case 'collection_cycle_timestamp_ns':
+            return Math.round(val);
+
           case 'udp_time':
           case 'parse_time':
           case 'event_time':
           case 'total_time':
-            return (val * 1e6).toFixed(0);
+            return (val * 1e6).toFixed(3);
+
           case 'data_processed':
-            return (val / 1e9).toFixed(6);
+            return (val / 1e3).toFixed(3); // bytes → KB
+
           default:
-            return val;
+            return val.toFixed(3);
         }
       };
 
@@ -111,3 +116,4 @@ const thStyle = {
   backgroundColor: '#f5f5f5',
 };
 const tdStyle = { borderBottom: '1px solid #ddd', padding: '8px' };
+
