@@ -47,19 +47,27 @@ export default function makeNaluIntegralHistogram({ Plot, SettingTypes }) {
         return null;
       }
 
-      const index = this.settings.selectedChannel;
-      if (index < 0 || index >= histList.length) {
-        console.warn(`Selected channel ${index} is out of bounds.`);
-        return null;
-      }
+      const targetChannel = this.settings.selectedChannel;
 
-      const hist = histList[index];
-      if (!hist || !Array.isArray(hist.fArray)) {
-        console.warn(`Histogram at selected index ${index} is invalid:`, hist);
+      // Find the histogram whose name or title contains "channel_<targetChannel>"
+      const hist = histList.find(h => {
+        const name = h.fName?.toLowerCase() || '';
+        const title = h.fTitle?.toLowerCase() || '';
+        const pattern = new RegExp(`channel[_\\s]*${targetChannel}\\b`);
+        return pattern.test(name) || pattern.test(title);
+      });
+
+      if (!hist) {
+        console.warn(`No histogram found for channel ${targetChannel}`);
         return null;
       }
 
       const fArray = hist.fArray;
+      if (!Array.isArray(fArray)) {
+        console.warn(`Histogram for channel ${targetChannel} has invalid fArray`);
+        return null;
+      }
+
       const fXaxis = hist.fXaxis || {};
       const nBins = fXaxis.fNbins || (fArray.length - 2);
       const xMin = fXaxis.fXmin ?? 0;
@@ -78,12 +86,13 @@ export default function makeNaluIntegralHistogram({ Plot, SettingTypes }) {
         type: 'bar',
         x: binEdges,
         y: yVals,
-        name: hist.fName || `hist_${index}`,
+        name: hist.fName || `hist_channel_${targetChannel}`,
         marker: { color: 'steelblue' },
         hoverinfo: 'x+y+name',
         width: binWidth,
       };
     }
+
 
     buildLayout(dataTrace) {
       if (!dataTrace) return {};

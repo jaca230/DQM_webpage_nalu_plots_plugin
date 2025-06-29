@@ -31,7 +31,7 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
 
     fetchData() {
       fetch(this.getDataUrl())
-        .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`))
+        .then(res => (res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`)))
         .then(json => {
           const item = json?.data?.arr?.[0];
           if (!item) throw new Error('No data found.');
@@ -48,18 +48,44 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
       if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
       if (!data) return <div>No data</div>;
 
-      const entries = Object.entries(data).filter(([k]) => k !== '_typename' && k !== 'fBits' && k !== 'fUniqueID');
+      // Filter out unwanted keys
+      const entries = Object.entries(data).filter(
+        ([k]) => k !== '_typename' && k !== 'fBits' && k !== 'fUniqueID'
+      );
+
+      // Helper function to format value with units
+      const formatValue = (key, val) => {
+        if (typeof val !== 'number') return val;
+
+        switch (key) {
+          case 'udp_time':
+          case 'parse_time':
+          case 'event_time':
+          case 'total_time':
+            return `${(val * 1e6).toFixed(0)} µs`; // seconds -> microseconds
+          case 'data_processed':
+            return `${(val / 1e9).toFixed(6)} GB`; // bytes -> gigabytes
+          case 'collection_cycle_timestamp_ns':
+            return `${val} ns`;
+          default:
+            return val;
+        }
+      };
+
       return (
         <div className="no-drag" style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', width: '100%' }}>
             <thead>
-              <tr><th style={thStyle}>Metric</th><th style={thStyle}>Value</th></tr>
+              <tr>
+                <th style={thStyle}>Metric</th>
+                <th style={thStyle}>Value</th>
+              </tr>
             </thead>
             <tbody>
               {entries.map(([key, val]) => (
                 <tr key={key}>
                   <td style={tdStyle}>{key}</td>
-                  <td style={tdStyle}>{val}</td>
+                  <td style={tdStyle}>{formatValue(key, val)}</td>
                 </tr>
               ))}
             </tbody>
@@ -70,5 +96,10 @@ export default function makeNaluTimingTable({ Table, SettingTypes }) {
   };
 }
 
-const thStyle = { borderBottom: '2px solid #ccc', padding: '8px', textAlign: 'left', backgroundColor: '#f5f5f5' };
+const thStyle = {
+  borderBottom: '2px solid #ccc',
+  padding: '8px',
+  textAlign: 'left',
+  backgroundColor: '#f5f5f5',
+};
 const tdStyle = { borderBottom: '1px solid #ddd', padding: '8px' };

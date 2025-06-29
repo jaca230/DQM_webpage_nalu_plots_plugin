@@ -35,11 +35,11 @@ export default function makeNaluTimingTicker({ Plot, SettingTypes }) {
       };
 
       this.fields = [
-        { key: 'data_rate', label: 'Data Rate' },
-        { key: 'event_time', label: 'Event Time' },
-        { key: 'total_time', label: 'Total Time' },
-        { key: 'parse_time', label: 'Parse Time' },
-        { key: 'udp_time', label: 'UDP Time' },
+        { key: 'data_rate', label: 'Data Rate (MB/s)' },
+        { key: 'event_time', label: 'Event Time (s)' },
+        { key: 'total_time', label: 'Total Time (s)' },
+        { key: 'parse_time', label: 'Parse Time (s)' },
+        { key: 'udp_time', label: 'UDP Time (s)' },
       ];
 
       this.colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];

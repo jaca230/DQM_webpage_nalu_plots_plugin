@@ -212,17 +212,25 @@ function makeNaluIntegralHistogram(_ref) {
           console.warn('No histograms found or empty array.');
           return null;
         }
-        var index = this.settings.selectedChannel;
-        if (index < 0 || index >= histList.length) {
-          console.warn("Selected channel ".concat(index, " is out of bounds."));
-          return null;
-        }
-        var hist = histList[index];
-        if (!hist || !Array.isArray(hist.fArray)) {
-          console.warn("Histogram at selected index ".concat(index, " is invalid:"), hist);
+        var targetChannel = this.settings.selectedChannel;
+
+        // Find the histogram whose name or title contains "channel_<targetChannel>"
+        var hist = histList.find(function (h) {
+          var _h$fName, _h$fTitle;
+          var name = ((_h$fName = h.fName) === null || _h$fName === void 0 ? void 0 : _h$fName.toLowerCase()) || '';
+          var title = ((_h$fTitle = h.fTitle) === null || _h$fTitle === void 0 ? void 0 : _h$fTitle.toLowerCase()) || '';
+          var pattern = new RegExp("channel[_\\s]*".concat(targetChannel, "\\b"));
+          return pattern.test(name) || pattern.test(title);
+        });
+        if (!hist) {
+          console.warn("No histogram found for channel ".concat(targetChannel));
           return null;
         }
         var fArray = hist.fArray;
+        if (!Array.isArray(fArray)) {
+          console.warn("Histogram for channel ".concat(targetChannel, " has invalid fArray"));
+          return null;
+        }
         var fXaxis = hist.fXaxis || {};
         var nBins = fXaxis.fNbins || fArray.length - 2;
         var xMin = (_fXaxis$fXmin = fXaxis.fXmin) !== null && _fXaxis$fXmin !== void 0 ? _fXaxis$fXmin : 0;
@@ -239,7 +247,7 @@ function makeNaluIntegralHistogram(_ref) {
           type: 'bar',
           x: binEdges,
           y: yVals,
-          name: hist.fName || "hist_".concat(index),
+          name: hist.fName || "hist_channel_".concat(targetChannel),
           marker: {
             color: 'steelblue'
           },
@@ -424,19 +432,19 @@ function makeNaluTimingTicker(_ref) {
       };
       _this.fields = [{
         key: 'data_rate',
-        label: 'Data Rate'
+        label: 'Data Rate (MB/s)'
       }, {
         key: 'event_time',
-        label: 'Event Time'
+        label: 'Event Time (s)'
       }, {
         key: 'total_time',
-        label: 'Total Time'
+        label: 'Total Time (s)'
       }, {
         key: 'parse_time',
-        label: 'Parse Time'
+        label: 'Parse Time (s)'
       }, {
         key: 'udp_time',
-        label: 'UDP Time'
+        label: 'UDP Time (s)'
       }];
       _this.colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
       return _this;
@@ -630,11 +638,33 @@ function makeNaluTimingTable(_ref) {
           }
         }, "Error: ", error);
         if (!data) return /*#__PURE__*/React.createElement("div", null, "No data");
+
+        // Filter out unwanted keys
         var entries = Object.entries(data).filter(function (_ref2) {
           var _ref3 = _slicedToArray(_ref2, 1),
             k = _ref3[0];
           return k !== '_typename' && k !== 'fBits' && k !== 'fUniqueID';
         });
+
+        // Helper function to format value with units
+        var formatValue = function formatValue(key, val) {
+          if (typeof val !== 'number') return val;
+          switch (key) {
+            case 'udp_time':
+            case 'parse_time':
+            case 'event_time':
+            case 'total_time':
+              return "".concat((val * 1e6).toFixed(0), " \xB5s");
+            // seconds -> microseconds
+            case 'data_processed':
+              return "".concat((val / 1e9).toFixed(6), " GB");
+            // bytes -> gigabytes
+            case 'collection_cycle_timestamp_ns':
+              return "".concat(val, " ns");
+            default:
+              return val;
+          }
+        };
         return /*#__PURE__*/React.createElement("div", {
           className: "no-drag",
           style: {
@@ -659,7 +689,7 @@ function makeNaluTimingTable(_ref) {
             style: tdStyle
           }, key), /*#__PURE__*/React.createElement("td", {
             style: tdStyle
-          }, val));
+          }, formatValue(key, val)));
         }))));
       }
     }], [{
